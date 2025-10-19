@@ -5,9 +5,13 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from .models import *
 from .forms import *
+# views.py
+from django.db.models import Count, Sum
+
+
 
 def dashboard(request):
-    # Statistika
+    # Asosiy statistika
     total_tools = Tool.objects.count()
     available_tools = Tool.objects.aggregate(Sum('quantity_available'))['quantity_available__sum'] or 0
     total_quantity = Tool.objects.aggregate(Sum('quantity_total'))['quantity_total__sum'] or 0
@@ -15,11 +19,28 @@ def dashboard(request):
     
     active_rentals = Rental.objects.filter(status='active').count()
     
+    # Asboblar statistikasi - TO'G'RI HISOBLASH
+    tools_stats = []
+    total_total = 0
+    
+    for tool in Tool.objects.all():
+        # Faol ijaralardagi asbob sonini hisoblash
+        rented_count = RentalItem.objects.filter(
+            tool=tool, 
+            rental__status='active'
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+        
+        tools_stats.append({
+            'name': tool.name,
+            'quantity_total': tool.quantity_total,
+            'quantity_available': tool.quantity_available,
+            'rented_count': rented_count
+        })
+        total_total += tool.quantity_total
+    
     # Oxirgi 5 ta ijara
     recent_rentals = Rental.objects.all().order_by('-created_at')[:5]
-    for rental in recent_rentals:
-        rental.items_count = rental.rentalitem_set.count()
-        rental.total_items = rental.rentalitem_set.aggregate(total=Sum('quantity'))['total'] or 0
+    
     # Bugungi daromad
     today_income = Rental.objects.filter(
         created_at__date=timezone.now().date(),
@@ -39,7 +60,10 @@ def dashboard(request):
         'recent_rentals': recent_rentals,
         'today_income': today_income,
         'popular_tools': popular_tools,
-        'recent_rentals': recent_rentals, 
+        'tools_stats': tools_stats,
+        'total_tools_stats': {
+            'total_total': total_total
+        }
     }
     return render(request, 'main/dashboard.html', context)
 

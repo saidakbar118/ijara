@@ -18,7 +18,7 @@
         </div>
         <div class="stat-info">
             <h3 class="number-format">{{ total_tools }}</h3>
-            <p>Jami Asboblar</p>
+            <p>Asbob Turlari</p>
         </div>
     </div>
     <div class="stat-card">
@@ -54,6 +54,112 @@
 <div class="content-grid">
     <!-- Left Column -->
     <div class="left-column">
+        <!-- Asboblar Statistikasi -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Asboblar Balansi</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Asbob Nomi</th>
+                                <th>Jami</th>
+                                <th>Mavjud</th>
+                                <th>Ijarada</th>
+                                <th>Foiz</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tool in tools_stats %}
+                            <tr>
+                                <td>
+                                    <strong>{{ tool.name }}</strong>
+                                </td>
+                                <td class="number-format">{{ tool.quantity_total }}</td>
+                                <td class="number-format">{{ tool.quantity_available }}</td>
+                                <td class="number-format">
+                                    {% if tool.rented_count %}
+                                        {{ tool.rented_count }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if tool.quantity_total > 0 %}
+                                        {% widthratio tool.quantity_available tool.quantity_total 100 %}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray);">
+                                    <i class="fas fa-tools" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
+                                    Hozircha asboblar mavjud emas
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: var(--secondary); font-weight: bold;">
+                                <td><strong>JAMI:</strong></td>
+                                <td class="number-format">
+                                    {% with total=total_tools_stats.total_total|default:0 %}
+                                        {{ total }}
+                                    {% endwith %}
+                                </td>
+                                <td class="number-format">{{ available_tools }}</td>
+                                <td class="number-format">{{ rented_tools }}</td>
+                                <td>
+                                    {% if total_quantity > 0 %}
+                                        {% widthratio available_tools total_quantity 100 %}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Rentals -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Oxirgi Ijaralar</h3>
+                <a href="{% url 'main:rental_list' %}">Barchasini ko'rish</a>
+            </div>
+            <div class="card-body">
+                <ul class="recent-activity">
+                    {% for rental in recent_rentals %}
+                    <li class="activity-item">
+                        <div class="activity-icon" style="background-color: {% if rental.status == 'active' %}#10b981{% else %}#6366f1{% endif %};">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="activity-info">
+                            <h4>{{ rental.customer.name }}</h4>
+                            <p>{{ rental.rentalitem_set.count }} ta asbob • <span class="number-format">{{ rental.total_amount|floatformat:0 }}</span> so'm</p>
+                        </div>
+                        <div class="activity-time">{{ rental.created_at|date:"d.m.Y H:i" }}</div>
+                    </li>
+                    {% empty %}
+                    <li class="activity-item">
+                        <div class="activity-info">
+                            <p>Hozircha ijaralar mavjud emas</p>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-column">
         <!-- Revenue Chart -->
         <div class="card">
             <div class="card-header">
@@ -74,39 +180,6 @@
             </div>
         </div>
 
-        <!-- Recent Rentals -->
-        <div class="card">
-            <div class="card-header">
-                <h3>Oxirgi Ijaralar</h3>
-                <a href="{% url 'main:rental_list' %}">Barchasini ko'rish</a>
-            </div>
-            <div class="card-body">
-                <ul class="recent-activity">
-                    {% for rental in recent_rentals %}
-                    <li class="activity-item">
-                        <div class="activity-icon" style="background-color: {% if rental.status == 'active' %}#10b981{% else %}#6366f1{% endif %};">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="activity-info">
-                            <h4>{{ rental.customer.name }}</h4>
-                            <p>{{ rental.items_count }} ta asbob • <span class="number-format">{{ rental.total_amount|floatformat:0 }}</span> so'm</p>
-                        </div>
-                        <div class="activity-time">{{ rental.created_at|date:"d.m.Y H:i" }}</div>
-                    </li>
-                    {% empty %}
-                    <li class="activity-item">
-                        <div class="activity-info">
-                            <p>Hozircha ijaralar mavjud emas</p>
-                        </div>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- Right Column -->
-    <div class="right-column">
         <!-- Popular Tools -->
         <div class="card">
             <div class="card-header">
