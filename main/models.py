@@ -21,8 +21,17 @@ class Tool(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def save(self, *args, **kwargs):
-        if not self.pk:  # Yangi obyekt
+        # Agar yangi asbob bo'lsa
+        if not self.pk:
             self.quantity_available = self.quantity_total
+        else:
+            # Mavjud asbobni yangilash
+            old_obj = Tool.objects.get(pk=self.pk)
+            if old_obj.quantity_total != self.quantity_total:
+                # Jami son o'zgarsa, mavjud sonni moslashtirish
+                difference = self.quantity_total - old_obj.quantity_total
+                self.quantity_available += difference
+        
         super().save(*args, **kwargs)
     
     def __str__(self):

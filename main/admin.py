@@ -6,12 +6,26 @@ class ToolCategoryAdmin(admin.ModelAdmin):
     list_display = ['name']
     search_fields = ['name']
 
+# admin.py
 @admin.register(Tool)
 class ToolAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'daily_price', 'quantity_available', 'quantity_total', 'is_active']
+    list_display = ['name', 'category', 'daily_price', 'quantity_total', 'quantity_available', 'is_active']
     list_filter = ['category', 'is_active']
     search_fields = ['name']
     list_editable = ['daily_price', 'quantity_total', 'is_active']
+    
+    def save_model(self, request, obj, form, change):
+        # Admin panelda saqlaganda available ni yangilash
+        if change:  # Mavjud obyekt
+            old_obj = Tool.objects.get(pk=obj.pk)
+            if old_obj.quantity_total != obj.quantity_total:
+                # Jami son o'zgarsa, mavjud sonni moslashtirish
+                difference = obj.quantity_total - old_obj.quantity_total
+                obj.quantity_available += difference
+        else:  # Yangi obyekt
+            obj.quantity_available = obj.quantity_total
+        
+        super().save_model(request, obj, form, change)
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
