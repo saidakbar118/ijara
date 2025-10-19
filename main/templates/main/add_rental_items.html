@@ -64,6 +64,7 @@
             <div class="card-body">
                 {% if rental_items %}
                 <div class="table-container">
+                    <!-- Asboblar jadvali qismida -->
                     <table class="table">
                         <thead>
                             <tr>
@@ -81,13 +82,20 @@
                                 <td>{{ item.tool.name }}</td>
                                 <td class="number-format">{{ item.quantity }}</td>
                                 <td class="number-format">{{ item.daily_rate|floatformat:0 }}</td>
-                                <td class="number-format">{{ item.total_days }}</td>
-                                <td class="number-format">{{ item.total_amount|floatformat:0 }}</td>
+                                <td class="number-format">{{ item.get_total_days }}</td>
+                                <td class="number-format">
+                                    {{ item.get_total_amount|floatformat:0 }}
+                                    <br>
+                                    <small style="color: var(--gray);">
+                                        ({{ item.quantity }} × {{ item.daily_rate|floatformat:0 }} × {{ item.get_total_days }} kun)
+                                    </small>
+                                </td>
                                 <td>
                                     <form method="post" style="display: inline;">
                                         {% csrf_token %}
                                         <input type="hidden" name="item_id" value="{{ item.id }}">
-                                        <button type="submit" name="remove_item" class="btn btn-danger btn-sm" onclick="return confirm('Asbob olib tashlansinmi?')">
+                                        <button type="submit" name="remove_item" class="btn btn-danger btn-sm" 
+                                                onclick="return confirm('{{ item.tool.name }} asbobini olib tashlashni istaysizmi?')">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>

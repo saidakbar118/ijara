@@ -17,7 +17,9 @@ def dashboard(request):
     
     # Oxirgi 5 ta ijara
     recent_rentals = Rental.objects.all().order_by('-created_at')[:5]
-    
+    for rental in recent_rentals:
+        rental.items_count = rental.rentalitem_set.count()
+        rental.total_items = rental.rentalitem_set.aggregate(total=Sum('quantity'))['total'] or 0
     # Bugungi daromad
     today_income = Rental.objects.filter(
         created_at__date=timezone.now().date(),
@@ -37,6 +39,7 @@ def dashboard(request):
         'recent_rentals': recent_rentals,
         'today_income': today_income,
         'popular_tools': popular_tools,
+        'recent_rentals': recent_rentals, 
     }
     return render(request, 'main/dashboard.html', context)
 
@@ -82,14 +85,25 @@ def rental_detail(request, rental_id):
     }
     return render(request, 'main/rental_detail.html', context)
 
+
+# views.py
+from django.utils import timezone
+from datetime import date, datetime
+
 def create_rental(request):
     if request.method == 'POST':
         form = RentalForm(request.POST)
         if form.is_valid():
-            rental = form.save()
-            return redirect(f'/rentals/{rental.id}/items/')
+            rental = form.save(commit=False)
+            # Sanani tekshirish
+            if not rental.start_date:
+                rental.start_date = timezone.now().date()
+            rental.save()
+            return redirect('main:add_rental_items', rental_id=rental.id)
     else:
-        form = RentalForm(initial={'start_date': timezone.now().date()})
+        # Boshlang'ich sana - bugun
+        today = timezone.now().date()
+        form = RentalForm(initial={'start_date': today})
     
     context = {
         'form': form,
@@ -104,11 +118,12 @@ def add_rental_items(request, rental_id):
     if request.method == 'POST':
         if 'add_item' in request.POST:
             tool_id = request.POST.get('tool')
-            quantity = int(request.POST.get('quantity', 0))
+            quantity = int(request.POST.get('quantity', 1))  # default 1
             
             tool = get_object_or_404(Tool, id=tool_id)
             
             if quantity > 0 and quantity <= tool.quantity_available:
+                # Asbobni qo'shish
                 rental_item, created = RentalItem.objects.get_or_create(
                     rental=rental,
                     tool=tool,
@@ -124,24 +139,41 @@ def add_rental_items(request, rental_id):
                 
                 tool.quantity_available -= quantity
                 tool.save()
+                
+                # Summani yangilash
                 rental.calculate_total()
+                
+                messages.success(request, f"'{tool.name}' asbobi qo'shildi.")
+            else:
+                messages.error(request, f"Noto'g'ri son. Mavjud: {tool.quantity_available}")
+            
+            return redirect('main:add_rental_items', rental_id=rental.id)
         
         elif 'remove_item' in request.POST:
             item_id = request.POST.get('item_id')
             rental_item = get_object_or_404(RentalItem, id=item_id, rental=rental)
+            tool_name = rental_item.tool.name
             
+            # Asbobni qaytarish
             tool = rental_item.tool
             tool.quantity_available += rental_item.quantity
             tool.save()
             
             rental_item.delete()
-            rental.calculate_total()
+            # Summa avtomatik yangilanadi (modeldagi delete)
+            
+            messages.success(request, f"'{tool_name}' asbobi olib tashlandi.")
+            return redirect('main:add_rental_items', rental_id=rental.id)
         
         elif 'complete_rental' in request.POST:
+            # Ijarani yakunlash
             rental.end_date = timezone.now().date()
             rental.status = 'completed'
             rental.save()
-            return redirect('rental_detail', rental_id=rental.id)
+            rental.calculate_total()
+            
+            messages.success(request, "Ijara yakunlandi!")
+            return redirect('main:rental_detail', rental_id=rental.id)
     
     rental_items = rental.rentalitem_set.all()
     
@@ -151,7 +183,6 @@ def add_rental_items(request, rental_id):
         'rental_items': rental_items,
     }
     return render(request, 'main/add_rental_items.html', context)
-
 def complete_rental(request, rental_id):
     rental = get_object_or_404(Rental, id=rental_id)
     
@@ -229,3 +260,123 @@ def get_dashboard_stats(request):
         'rented_tools': rented_tools,
         'active_rentals': active_rentals,
     })
+    
+    
+    
+# views.py
+from django.contrib import messages
+
+# Asbobni o'chirish
+def delete_tool(request, tool_id):
+    tool = get_object_or_404(Tool, id=tool_id)
+    if request.method == 'POST':
+        # Asbob faol ijaralarda ishlatilayotganligini tekshirish
+        active_rentals = RentalItem.objects.filter(tool=tool, rental__status='active')
+        if active_rentals.exists():
+            messages.error(request, f"'{tool.name}' asbobi faol ijaralarda ishlatilmoqda. Oldin ijaralarni yakunlang.")
+            return redirect('main:tool_list')
+        
+        tool.delete()
+        messages.success(request, f"'{tool.name}' asbobi o'chirildi.")
+    return redirect('main:tool_list')
+
+# Asbobni tahrirlash
+def edit_tool(request, tool_id):
+    tool = get_object_or_404(Tool, id=tool_id)
+    if request.method == 'POST':
+        form = ToolForm(request.POST, instance=tool)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"'{tool.name}' asbobi yangilandi.")
+            return redirect('main:tool_list')
+    else:
+        form = ToolForm(instance=tool)
+    
+    context = {
+        'form': form,
+        'title': 'Asbobni Tahrirlash',
+        'tool': tool,
+    }
+    return render(request, 'main/edit_tool.html', context)
+# edit_rental funksiyasini yangilaymiz
+def edit_rental(request, rental_id):
+    rental = get_object_or_404(Rental, id=rental_id)
+    
+    if request.method == 'POST':
+        form = RentalForm(request.POST, instance=rental)
+        if form.is_valid():
+            # Faqat boshlanish sanasini yangilash
+            old_start_date = rental.start_date
+            rental = form.save()
+            
+            # Agar sana o'zgarsa, summani qayta hisoblash
+            if old_start_date != rental.start_date:
+                rental.calculate_total()
+            
+            messages.success(request, "Ijara yangilandi.")
+            return redirect('main:rental_detail', rental_id=rental.id)
+    else:
+        form = RentalForm(instance=rental)
+    
+    context = {
+        'form': form,
+        'title': 'Ijarani Tahrirlash',
+        'rental': rental,
+    }
+    return render(request, 'main/edit_rental.html', context)
+
+# edit_customer funksiyasini yangilaymiz
+def edit_customer(request, customer_id):
+    customer = get_object_or_404(Customer, id=customer_id)
+    
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, instance=customer)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"'{customer.name}' mijoz yangilandi.")
+            return redirect('main:customer_list')
+    else:
+        form = CustomerForm(instance=customer)
+    
+    # Mijoz statistikasini hisoblash
+    total_rentals = customer.rental_set.count()
+    active_rentals = customer.rental_set.filter(status='active').count()
+    
+    context = {
+        'form': form,
+        'title': 'Mijozni Tahrirlash',
+        'customer': customer,
+        'total_rentals': total_rentals,
+        'active_rentals': active_rentals,
+    }
+    return render(request, 'main/edit_customer.html', context)
+# Mijozni o'chirish
+def delete_customer(request, customer_id):
+    customer = get_object_or_404(Customer, id=customer_id)
+    if request.method == 'POST':
+        # Mijozning faol ijaralarini tekshirish
+        active_rentals = customer.rental_set.filter(status='active')
+        if active_rentals.exists():
+            messages.error(request, f"'{customer.name}' mijozning faol ijaralari mavjud. Oldin ijaralarni yakunlang.")
+            return redirect('main:customer_list')
+        
+        customer.delete()
+        messages.success(request, f"'{customer.name}' mijoz o'chirildi.")
+    return redirect('main:customer_list')
+
+#
+# Ijarani o'chirish
+def delete_rental(request, rental_id):
+    rental = get_object_or_404(Rental, id=rental_id)
+    if request.method == 'POST':
+        if rental.status == 'active':
+            # Asboblarni qaytarish
+            rental_items = rental.rentalitem_set.all()
+            for item in rental_items:
+                tool = item.tool
+                tool.quantity_available += item.quantity
+                tool.save()
+        
+        rental.delete()
+        messages.success(request, f"Ijara o'chirildi.")
+    return redirect('main:rental_list')

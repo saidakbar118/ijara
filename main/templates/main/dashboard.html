@@ -89,7 +89,7 @@
                         </div>
                         <div class="activity-info">
                             <h4>{{ rental.customer.name }}</h4>
-                            <p>{{ rental.rentalitem_set.count }} ta asbob • <span class="number-format">{{ rental.total_amount|floatformat:0 }}</span> so'm</p>
+                            <p>{{ rental.items_count }} ta asbob • <span class="number-format">{{ rental.total_amount|floatformat:0 }}</span> so'm</p>
                         </div>
                         <div class="activity-time">{{ rental.created_at|date:"d.m.Y H:i" }}</div>
                     </li>

@@ -38,6 +38,7 @@
                         <th>Manzil</th>
                         <th>Ro'yxatdan o'tgan</th>
                         <th>Ijaralar soni</th>
+                        <th>Amallar</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -50,10 +51,24 @@
                         <td>{{ customer.address|truncatewords:10 }}</td>
                         <td>{{ customer.created_at|date:"d.m.Y" }}</td>
                         <td class="number-format">{{ customer.rental_set.count }}</td>
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="{% url 'main:edit_customer' customer.id %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post" action="{% url 'main:delete_customer' customer.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('{{ customer.name }} mijoz o\'chirilsinmi?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray);">
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--gray);">
                             <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
                             Hozircha mijozlar mavjud emas
                         </td>

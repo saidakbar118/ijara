@@ -48,6 +48,7 @@
     </div>
     <div class="card-body">
         <div class="table-container">
+            <!-- Tools Table qismiga qo'shamiz -->
             <table class="table">
                 <thead>
                     <tr>
@@ -57,6 +58,7 @@
                         <th>Mavjud</th>
                         <th>Jami</th>
                         <th>Holati</th>
+                        <th>Amallar</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -67,8 +69,8 @@
                         </td>
                         <td>{{ tool.category.name }}</td>
                         <td class="number-format">{{ tool.daily_price|floatformat:0 }}</td>
-                        <td class="number-format available-count">{{ tool.quantity_available }}</td>
-                        <td class="number-format total-count">{{ tool.quantity_total }}</td>
+                        <td class="number-format">{{ tool.quantity_available }}</td>
+                        <td class="number-format">{{ tool.quantity_total }}</td>
                         <td>
                             {% if tool.is_active %}
                             <span class="status-badge status-active">Faol</span>
@@ -76,12 +78,19 @@
                             <span class="status-badge status-cancelled">Nofaol</span>
                             {% endif %}
                         </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--gray);">
-                            <i class="fas fa-tools" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
-                            Hozircha asboblar mavjud emas
+                        <td>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <a href="{% url 'main:edit_tool' tool.id %}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post" action="{% url 'main:delete_tool' tool.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('{{ tool.name }} asbobini o\'chirishni istaysizmi?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

@@ -22,4 +22,14 @@ urlpatterns = [
     # Mijozlar
     path('customers/', views.customer_list, name='customer_list'),
     path('customers/create/', views.create_customer, name='create_customer'),
+     path('tools/<int:tool_id>/edit/', views.edit_tool, name='edit_tool'),
+    path('tools/<int:tool_id>/delete/', views.delete_tool, name='delete_tool'),
+    
+    # Mijozlar
+    path('customers/<int:customer_id>/edit/', views.edit_customer, name='edit_customer'),
+    path('customers/<int:customer_id>/delete/', views.delete_customer, name='delete_customer'),
+    
+    # Ijaralar
+    path('rentals/<int:rental_id>/edit/', views.edit_rental, name='edit_rental'),
+    path('rentals/<int:rental_id>/delete/', views.delete_rental, name='delete_rental'),
 ]

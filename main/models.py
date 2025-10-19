@@ -59,18 +59,30 @@ class Rental(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name="Holati")
     created_at = models.DateTimeField(auto_now_add=True)
     
-    def get_total_days(self):
-        if self.end_date:
-            return (self.end_date - self.start_date).days + 1
-        else:
-            return (timezone.now().date() - self.start_date).days + 1
-    
     def calculate_total(self):
+        """Ijara summasini aniq hisoblash"""
         items = self.rentalitem_set.all()
-        total = sum(item.total_amount for item in items)
+        total = 0
+        for item in items:
+            total += float(item.quantity) * float(item.daily_rate) * item.get_total_days()
         self.total_amount = total
         self.save()
         return total
+    
+    def get_total_days(self):
+        """Ijara kunlarini hisoblash - xatoliksiz versiya"""
+        try:
+            if self.end_date:
+                # Tugash sanasi bo'lsa
+                days = (self.end_date - self.start_date).days
+                return days + 1 if days >= 0 else 1
+            else:
+                # Faol ijara - bugungacha
+                today = timezone.now().date()
+                days = (today - self.start_date).days
+                return days + 1 if days >= 0 else 1
+        except (TypeError, ValueError):
+            return 1  # Xato yuz bersa, kamida 1 kun
     
     def __str__(self):
         return f"{self.customer.name} - {self.start_date}"
@@ -79,23 +91,36 @@ class Rental(models.Model):
         verbose_name = "Ijara"
         verbose_name_plural = "Ijaralar"
 
+# models.py
 class RentalItem(models.Model):
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
     tool = models.ForeignKey(Tool, on_delete=models.CASCADE, verbose_name="Asbob")
     quantity = models.IntegerField(verbose_name="Soni")
     daily_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Kunlik narx")
     
-    @property
-    def total_days(self):
-        return self.rental.get_total_days()
+    def get_total_days(self):
+        """Rental modeliga murojaat qiladi"""
+        try:
+            return self.rental.get_total_days()
+        except:
+            return 1
+        
+    def get_total_amount(self):
+        """Umumiy summani hisoblash"""
+        total_days = self.get_total_days()
+        total = self.quantity * self.daily_rate * total_days
+        return total
     
-    @property
-    def total_amount(self):
-        return self.quantity * self.daily_rate * self.total_days
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Har safar saqlanganda rental summasini yangilash
+        self.rental.calculate_total()
+    
+    def delete(self, *args, **kwargs):
+        rental = self.rental
+        super().delete(*args, **kwargs)
+        # O'chirilganda rental summasini yangilash
+        rental.calculate_total()
     
     def __str__(self):
         return f"{self.tool.name} x {self.quantity}"
-    
-    class Meta:
-        verbose_name = "Ijara mahsuloti"
-        verbose_name_plural = "Ijara mahsulotlari"

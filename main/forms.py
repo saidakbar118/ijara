@@ -33,18 +33,35 @@ class CustomerForm(forms.ModelForm):
             'address': 'Manzil',
         }
 
+# forms.py
+from django import forms
+from django.utils import timezone
+
 class RentalForm(forms.ModelForm):
     class Meta:
         model = Rental
         fields = ['customer', 'start_date']
         widgets = {
-            'customer': forms.Select(attrs={'class': 'form-control'}),
-            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'customer': forms.Select(attrs={
+                'class': 'form-control',
+                'required': True
+            }),
+            'start_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+                'required': True
+            }),
         }
         labels = {
             'customer': 'Mijoz',
             'start_date': 'Boshlanish sanasi',
         }
+    
+    def clean_start_date(self):
+        start_date = self.cleaned_data.get('start_date')
+        if start_date and start_date > timezone.now().date():
+            raise forms.ValidationError("Boshlanish sanasi kelajakda bo'lishi mumkin emas!")
+        return start_date
 
 class RentalItemForm(forms.ModelForm):
     class Meta:
