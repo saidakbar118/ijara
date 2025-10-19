@@ -58,7 +58,11 @@ class Rental(models.Model):
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="Jami summa")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name="Holati")
     created_at = models.DateTimeField(auto_now_add=True)
-    
+    def save(self, *args, **kwargs):
+        """SAVE METHODINI QO'SHISH KERAK"""
+        super().save(*args, **kwargs)
+        # Sana o'zgarganda narxni yangilash
+        self.calculate_total()
     def calculate_total(self):
         """Ijara summasini aniq hisoblash"""
         items = self.rentalitem_set.all()
@@ -66,7 +70,7 @@ class Rental(models.Model):
         for item in items:
             total += float(item.quantity) * float(item.daily_rate) * item.get_total_days()
         self.total_amount = total
-        self.save()
+        super().save(update_fields=['total_amount'])
         return total
     
     def get_total_days(self):
