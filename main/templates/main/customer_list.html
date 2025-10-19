@@ -1,0 +1,67 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Mijozlar Ro'yxati - ToolRent CRM{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <h2>Mijozlar Ro'yxati</h2>
+    <a href="{% url 'main:create_customer' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Yangi Mijoz
+    </a>
+</div>
+
+<!-- Customers Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <h3 class="number-format">{{ customers.count }}</h3>
+            <p>Jami Mijozlar</p>
+        </div>
+    </div>
+</div>
+
+<!-- Customers Table -->
+<div class="card">
+    <div class="card-header">
+        <h3>Barcha Mijozlar</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Ism</th>
+                        <th>Telefon</th>
+                        <th>Manzil</th>
+                        <th>Ro'yxatdan o'tgan</th>
+                        <th>Ijaralar soni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <strong>{{ customer.name }}</strong>
+                        </td>
+                        <td>{{ customer.phone }}</td>
+                        <td>{{ customer.address|truncatewords:10 }}</td>
+                        <td>{{ customer.created_at|date:"d.m.Y" }}</td>
+                        <td class="number-format">{{ customer.rental_set.count }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem; color: var(--gray);">
+                            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
+                            Hozircha mijozlar mavjud emas
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

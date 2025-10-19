@@ -1,0 +1,162 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Boshqaruv Paneli - ToolRent CRM{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <h2>Boshqaruv Paneli</h2>
+    <a href="{% url 'main:create_rental' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Yangi Ijara
+    </a>
+</div>
+
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon icon-tools">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div class="stat-info">
+            <h3 class="number-format">{{ total_tools }}</h3>
+            <p>Jami Asboblar</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-available">
+            <i class="fas fa-box-open"></i>
+        </div>
+        <div class="stat-info">
+            <h3 class="number-format">{{ available_tools }}</h3>
+            <p>Mavjud Asboblar</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-rented">
+            <i class="fas fa-handshake"></i>
+        </div>
+        <div class="stat-info">
+            <h3 class="number-format">{{ rented_tools }}</h3>
+            <p>Ijara Asboblar</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-active">
+            <i class="fas fa-sync-alt"></i>
+        </div>
+        <div class="stat-info">
+            <h3 class="number-format">{{ active_rentals }}</h3>
+            <p>Faol Ijaralar</p>
+        </div>
+    </div>
+</div>
+
+<!-- Content Grid -->
+<div class="content-grid">
+    <!-- Left Column -->
+    <div class="left-column">
+        <!-- Revenue Chart -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Daromad Statistikasi</h3>
+                <select class="form-control" style="width: auto;">
+                    <option>Oxirgi 7 kun</option>
+                    <option>Oxirgi 30 kun</option>
+                    <option>Oxirgi 3 oy</option>
+                </select>
+            </div>
+            <div class="card-body">
+                <div class="chart-placeholder">
+                    <div class="chart-content">
+                        <i class="fas fa-chart-line"></i>
+                        <p>Bugungi daromad: <span class="number-format">{{ today_income|floatformat:0 }}</span> so'm</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Rentals -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Oxirgi Ijaralar</h3>
+                <a href="{% url 'main:rental_list' %}">Barchasini ko'rish</a>
+            </div>
+            <div class="card-body">
+                <ul class="recent-activity">
+                    {% for rental in recent_rentals %}
+                    <li class="activity-item">
+                        <div class="activity-icon" style="background-color: {% if rental.status == 'active' %}#10b981{% else %}#6366f1{% endif %};">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="activity-info">
+                            <h4>{{ rental.customer.name }}</h4>
+                            <p>{{ rental.rentalitem_set.count }} ta asbob • <span class="number-format">{{ rental.total_amount|floatformat:0 }}</span> so'm</p>
+                        </div>
+                        <div class="activity-time">{{ rental.created_at|date:"d.m.Y H:i" }}</div>
+                    </li>
+                    {% empty %}
+                    <li class="activity-item">
+                        <div class="activity-info">
+                            <p>Hozircha ijaralar mavjud emas</p>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-column">
+        <!-- Popular Tools -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Mashhur Asboblar</h3>
+            </div>
+            <div class="card-body">
+                <ul class="recent-activity">
+                    {% for tool in popular_tools %}
+                    <li class="activity-item">
+                        <div class="activity-icon" style="background-color: #8b5cf6;">
+                            <i class="fas fa-wrench"></i>
+                        </div>
+                        <div class="activity-info">
+                            <h4>{{ tool.name }}</h4>
+                            <p>{{ tool.rental_count }} ta faol ijara</p>
+                        </div>
+                    </li>
+                    {% empty %}
+                    <li class="activity-item">
+                        <div class="activity-info">
+                            <p>Hozircha ma'lumot yo'q</p>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Tezkor Amallar</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <a href="{% url 'main:create_tool' %}" class="btn" style="background: #f0f9ff; color: #0369a1; text-decoration: none;">
+                        <i class="fas fa-plus"></i> Asbob
+                    </a>
+                    <a href="{% url 'main:create_customer' %}" class="btn" style="background: #f0fdf4; color: #15803d; text-decoration: none;">
+                        <i class="fas fa-user-plus"></i> Mijoz
+                    </a>
+                    <a href="{% url 'main:create_rental' %}" class="btn" style="background: #fefce8; color: #a16207; text-decoration: none;">
+                        <i class="fas fa-file-invoice"></i> Ijara
+                    </a>
+                    <a href="/admin/" class="btn" style="background: #fef2f2; color: #b91c1c; text-decoration: none;">
+                        <i class="fas fa-cog"></i> Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

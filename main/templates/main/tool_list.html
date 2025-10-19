@@ -1,0 +1,115 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Asboblar Ro'yxati - ToolRent CRM{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <h2>Asboblar Ro'yxati</h2>
+    <a href="{% url 'main:create_tool' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Yangi Asbob
+    </a>
+</div>
+
+<!-- Tools Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon icon-tools">
+            <i class="fas fa-tools"></i>
+        </div>
+        <div class="stat-info">
+            <h3 class="number-format">{{ tools.count }}</h3>
+            <p>Jami Asboblar</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-available">
+            <i class="fas fa-box-open"></i>
+        </div>
+        <div class="stat-info">
+            <h3 class="number-format" id="available-tools">0</h3>
+            <p>Mavjud Asboblar</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon icon-rented">
+            <i class="fas fa-handshake"></i>
+        </div>
+        <div class="stat-info">
+            <h3 class="number-format" id="rented-tools">0</h3>
+            <p>Ijara Asboblar</p>
+        </div>
+    </div>
+</div>
+
+<!-- Tools Table -->
+<div class="card">
+    <div class="card-header">
+        <h3>Barcha Asboblar</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nomi</th>
+                        <th>Kategoriya</th>
+                        <th>Kunlik narx</th>
+                        <th>Mavjud</th>
+                        <th>Jami</th>
+                        <th>Holati</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tool in tools %}
+                    <tr>
+                        <td>
+                            <strong>{{ tool.name }}</strong>
+                        </td>
+                        <td>{{ tool.category.name }}</td>
+                        <td class="number-format">{{ tool.daily_price|floatformat:0 }}</td>
+                        <td class="number-format available-count">{{ tool.quantity_available }}</td>
+                        <td class="number-format total-count">{{ tool.quantity_total }}</td>
+                        <td>
+                            {% if tool.is_active %}
+                            <span class="status-badge status-active">Faol</span>
+                            {% else %}
+                            <span class="status-badge status-cancelled">Nofaol</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--gray);">
+                            <i class="fas fa-tools" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
+                            Hozircha asboblar mavjud emas
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+// JavaScript bilan hisoblash
+document.addEventListener('DOMContentLoaded', function() {
+    let totalAvailable = 0;
+    let totalTotal = 0;
+    
+    // Mavjud asboblar sonini hisoblash
+    document.querySelectorAll('.available-count').forEach(el => {
+        totalAvailable += parseInt(el.textContent.replace(/,/g, '')) || 0;
+    });
+    
+    // Jami asboblar sonini hisoblash
+    document.querySelectorAll('.total-count').forEach(el => {
+        totalTotal += parseInt(el.textContent.replace(/,/g, '')) || 0;
+    });
+    
+    // Natijalarni ko'rsatish
+    document.getElementById('available-tools').textContent = totalAvailable.toLocaleString();
+    document.getElementById('rented-tools').textContent = (totalTotal - totalAvailable).toLocaleString();
+});
+</script>
+{% endblock %}

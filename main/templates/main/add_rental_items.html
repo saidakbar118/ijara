@@ -1,0 +1,157 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Asbob Qo'shish - ToolRent CRM{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <h2>Ijara: {{ rental.customer.name }}</h2>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{% url 'main:rental_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Ortga
+        </a>
+        {% if rental.rentalitem_set.exists %}
+        <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" name="complete_rental" class="btn btn-success" onclick="return confirm('Ijara yakunlansinmi?')">
+                <i class="fas fa-check"></i> Yakunlash
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="content-grid">
+    <!-- Left Column - Add Tools -->
+    <div class="left-column">
+        <div class="card">
+            <div class="card-header">
+                <h3>Asbob Qo'shish</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 1rem; align-items: end;">
+                        <div class="form-group">
+                            <label class="form-label">Asbob</label>
+                            <select name="tool" class="form-control form-select" required>
+                                <option value="">Asbobni tanlang</option>
+                                {% for tool in tools %}
+                                <option value="{{ tool.id }}">
+                                    {{ tool.name }} - {{ tool.daily_price|floatformat:0 }} so'm/kun ({{ tool.quantity_available }} ta mavjud)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Soni</label>
+                            <input type="number" name="quantity" class="form-control" min="1" value="1" required>
+                        </div>
+                        <div>
+                            <button type="submit" name="add_item" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Qo'shish
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Current Items -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Ijara Asboblari</h3>
+            </div>
+            <div class="card-body">
+                {% if rental_items %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Asbob</th>
+                                <th>Soni</th>
+                                <th>Kunlik narx</th>
+                                <th>Kunlar</th>
+                                <th>Summa</th>
+                                <th>Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in rental_items %}
+                            <tr>
+                                <td>{{ item.tool.name }}</td>
+                                <td class="number-format">{{ item.quantity }}</td>
+                                <td class="number-format">{{ item.daily_rate|floatformat:0 }}</td>
+                                <td class="number-format">{{ item.total_days }}</td>
+                                <td class="number-format">{{ item.total_amount|floatformat:0 }}</td>
+                                <td>
+                                    <form method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                                        <button type="submit" name="remove_item" class="btn btn-danger btn-sm" onclick="return confirm('Asbob olib tashlansinmi?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: var(--secondary);">
+                                <td colspan="4"><strong>Jami:</strong></td>
+                                <td colspan="2">
+                                    <strong class="number-format">{{ rental.total_amount|floatformat:0 }}</strong> so'm
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 2rem; color: var(--gray);">
+                    <i class="fas fa-tools" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
+                    Hozircha asbob qo'shilmagan
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Rental Info -->
+    <div class="right-column">
+        <div class="card">
+            <div class="card-header">
+                <h3>Ijara Ma'lumotlari</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; gap: 1rem;">
+                    <div>
+                        <strong>Mijoz:</strong><br>
+                        {{ rental.customer.name }}
+                    </div>
+                    <div>
+                        <strong>Telefon:</strong><br>
+                        {{ rental.customer.phone }}
+                    </div>
+                    <div>
+                        <strong>Manzil:</strong><br>
+                        {{ rental.customer.address|linebreaks }}
+                    </div>
+                    <div>
+                        <strong>Boshlanish sanasi:</strong><br>
+                        {{ rental.start_date|date:"d.m.Y" }}
+                    </div>
+                    <div>
+                        <strong>Holati:</strong><br>
+                        <span class="status-badge status-{{ rental.status }}">
+                            {{ rental.get_status_display }}
+                        </span>
+                    </div>
+                    <div>
+                        <strong>Ijara kunlari:</strong><br>
+                        <span class="number-format">{{ rental.get_total_days }}</span> kun
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

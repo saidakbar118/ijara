@@ -1,0 +1,129 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Ijara Ma'lumoti - ToolRent CRM{% endblock %}
+
+{% block content %}
+<div class="page-title">
+    <h2>Ijara Ma'lumoti</h2>
+    <div style="display: flex; gap: 1rem;">
+        <a href="{% url 'main:rental_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Ortga
+        </a>
+        {% if rental.status == 'active' %}
+        <a href="{% url 'main:add_rental_items' rental.id %}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Tahrirlash
+        </a>
+        <form method="post" action="{% url 'main:complete_rental' rental.id %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success" onclick="return confirm('Ijara yakunlansinmi?')">
+                <i class="fas fa-check"></i> Yakunlash
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="content-grid">
+    <!-- Left Column - Rental Items -->
+    <div class="left-column">
+        <div class="card">
+            <div class="card-header">
+                <h3>Ijara Asboblari</h3>
+            </div>
+            <div class="card-body">
+                {% if rental_items %}
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Asbob</th>
+                                <th>Soni</th>
+                                <th>Kunlik narx</th>
+                                <th>Kunlar</th>
+                                <th>Summa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in rental_items %}
+                            <tr>
+                                <td>{{ item.tool.name }}</td>
+                                <td class="number-format">{{ item.quantity }}</td>
+                                <td class="number-format">{{ item.daily_rate|floatformat:0 }}</td>
+                                <td class="number-format">{{ item.total_days }}</td>
+                                <td class="number-format">{{ item.total_amount|floatformat:0 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: var(--secondary);">
+                                <td colspan="4"><strong>Jami:</strong></td>
+                                <td>
+                                    <strong class="number-format">{{ rental.total_amount|floatformat:0 }}</strong> so'm
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 2rem; color: var(--gray);">
+                    <i class="fas fa-tools" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.5;"></i>
+                    Asboblar mavjud emas
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Rental Info -->
+    <div class="right-column">
+        <div class="card">
+            <div class="card-header">
+                <h3>Ijara Tafsilotlari</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; gap: 1.5rem;">
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--dark);">Mijoz Ma'lumotlari</h4>
+                        <div style="background: var(--secondary); padding: 1rem; border-radius: var(--radius);">
+                            <div><strong>Ism:</strong> {{ rental.customer.name }}</div>
+                            <div><strong>Telefon:</strong> {{ rental.customer.phone }}</div>
+                            <div><strong>Manzil:</strong> {{ rental.customer.address|linebreaks }}</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--dark);">Ijara Ma'lumotlari</h4>
+                        <div style="background: var(--secondary); padding: 1rem; border-radius: var(--radius);">
+                            <div><strong>Boshlanish:</strong> {{ rental.start_date|date:"d.m.Y" }}</div>
+                            <div>
+                                <strong>Tugash:</strong> 
+                                {% if rental.end_date %}
+                                    {{ rental.end_date|date:"d.m.Y" }}
+                                {% else %}
+                                    <span style="color: var(--gray);">Hali yakunlanmagan</span>
+                                {% endif %}
+                            </div>
+                            <div><strong>Ijara kunlari:</strong> <span class="number-format">{{ rental.get_total_days }}</span> kun</div>
+                            <div><strong>Holati:</strong> 
+                                <span class="status-badge status-{{ rental.status }}">
+                                    {{ rental.get_status_display }}
+                                </span>
+                            </div>
+                            <div><strong>Yaratilgan:</strong> {{ rental.created_at|date:"d.m.Y H:i" }}</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem; color: var(--dark);">To'lov Ma'lumotlari</h4>
+                        <div style="background: var(--secondary); padding: 1rem; border-radius: var(--radius);">
+                            <div style="font-size: 1.5rem; font-weight: bold; text-align: center; color: var(--primary);">
+                                <span class="number-format">{{ rental.total_amount|floatformat:0 }}</span> so'm
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
