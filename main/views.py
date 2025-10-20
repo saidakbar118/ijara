@@ -67,6 +67,15 @@ def dashboard(request):
     }
     return render(request, 'main/dashboard.html', context)
 
+
+# views.py ga yangi view qo'shamiz
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
+def custom_logout(request):
+    logout(request)
+    return redirect('/login/')
+
 def rental_list(request):
     rentals = Rental.objects.all().order_by('-created_at')
     

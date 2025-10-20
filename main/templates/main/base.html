@@ -705,6 +705,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Header -->
+            <!-- base.html - header qismiga user info qo'shamiz -->
             <header class="header">
                 <button class="menu-toggle">
                     <i class="fas fa-bars"></i>
@@ -719,9 +720,26 @@
                         <span class="notification-badge">3</span>
                     </div>
                     <div class="user-info">
-                        <div class="user-avatar">A</div>
-                        <span class="user-name">Admin</span>
+                        <div class="user-avatar">
+                            {% if user.is_authenticated %}
+                                {{ user.username.0|upper }}
+                            {% else %}
+                                A
+                            {% endif %}
+                        </div>
+                        <span class="user-name">
+                            {% if user.is_authenticated %}
+                                {{ user.username }}
+                            {% else %}
+                                Admin
+                            {% endif %}
+                        </span>
                     </div>
+                    {% if user.is_authenticated %}
+                    <a href="/logout/" class="btn btn-sm" style="background: var(--danger); color: white; margin-left: 1rem;">
+                        <i class="fas fa-sign-out-alt"></i> Chiqish
+                    </a>
+                    {% endif %}
                 </div>
             </header>
 
